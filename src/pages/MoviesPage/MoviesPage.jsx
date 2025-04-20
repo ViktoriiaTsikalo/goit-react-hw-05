@@ -1,28 +1,28 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import { fetchMoviesByQuery } from "../../services/api";
-import { Link } from "react-router-dom";
+import MovieList from "../../components/MovieList/MovieList";
 
 const MoviesPage = () => {
   const [movies, setMovies] = useState([]);
-  const [query, setQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleSearch = (newQuery) => {
-    setQuery(newQuery);
-    setMovies([]);
-  };
+  const [searchParams, setSearchParams] = useSearchParams();
+  const query = searchParams.get("query") || "";
 
   const handleSubmit = (evt) => {
     evt.preventDefault();
     const form = evt.target;
-    const query = form.elements.query.value.trim();
+    const newQuery = form.elements.query.value.trim();
 
-    if (query === "") {
+    if (newQuery === "") {
       toast.error("Please enter a search term!");
       return;
     }
 
-    handleSearch(query);
+    setSearchParams({ query: newQuery });
     form.reset();
   };
 
@@ -30,6 +30,9 @@ const MoviesPage = () => {
     if (!query) return;
 
     const getMovies = async () => {
+      setIsLoading(true);
+      setError(null);
+
       try {
         const fetchedMovies = await fetchMoviesByQuery(query);
         if (fetchedMovies.length === 0) {
@@ -37,7 +40,10 @@ const MoviesPage = () => {
         }
         setMovies(fetchedMovies);
       } catch (error) {
+        setError(error.message);
         toast.error("Something went wrong!");
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -45,7 +51,7 @@ const MoviesPage = () => {
   }, [query]);
 
   return (
-    <header>
+    <div>
       <form onSubmit={handleSubmit}>
         <input
           name="query"
@@ -56,16 +62,13 @@ const MoviesPage = () => {
         />
         <button type="submit">Search</button>
       </form>
-      <ul>
-        {movies.map((item) => (
-          <li key={item.id}>
-            <Link to={`/movies/${item.id}`}>{item.title}</Link>
-          </li>
-        ))}
-      </ul>
+
+      {isLoading && <p>Loading...</p>}
+      {error && <p>Error: {error}</p>}
+      {!isLoading && !error && <MovieList data={movies} />}
 
       <Toaster position="top-center" reverseOrder={false} />
-    </header>
+    </div>
   );
 };
 

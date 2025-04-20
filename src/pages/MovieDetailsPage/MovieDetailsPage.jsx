@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Outlet,
   useParams,
@@ -15,7 +15,7 @@ const MovieDetailPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const from = location.state?.from || "/movies";
+  const fromRef = useRef(location.state?.from || "/movies");
 
   const [movie, setMovie] = useState({});
 
@@ -41,17 +41,20 @@ const MovieDetailPage = () => {
     <div>
       <button
         type="button"
-        onClick={() => navigate(from)}
+        onClick={() => navigate(fromRef.current)}
         className={css.goBackBtn}
       >
         ← Go back
       </button>
 
-      <img
-        src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
-        alt={movie.title}
-        width="300px"
-      />
+      {movie.poster_path && (
+        <img
+          src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+          alt={movie.title}
+          width="300px"
+        />
+      )}
+
       <h2>
         {movie.title} ({movie.release_date?.slice(0, 4)})
       </h2>
@@ -71,12 +74,20 @@ const MovieDetailPage = () => {
       <p>Additional information</p>
       <ul>
         <li>
-          <NavLink to="cast" state={{ from }} className={buildLinkClass}>
+          <NavLink
+            to="cast"
+            state={{ from: fromRef.current }}
+            className={buildLinkClass}
+          >
             Cast
           </NavLink>
         </li>
         <li>
-          <NavLink to="reviews" state={{ from }} className={buildLinkClass}>
+          <NavLink
+            to="reviews"
+            state={{ from: fromRef.current }}
+            className={buildLinkClass}
+          >
             Reviews
           </NavLink>
         </li>
